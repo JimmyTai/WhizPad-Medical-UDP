@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/padStatus_ll_appBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/utilsAppBar"
+            android:background="@color/colorPrimary">
+
+            <TextView
+                android:id="@+id/padStatus_tv_appBarTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="Zenbo模擬 - 床墊狀態"
+                android:textColor="@color/utilsTextB"
+                android:textSize="14sp"/>
+
+        </RelativeLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/utilsAppBarShadow"
+            android:background="@drawable/utils_shadow_app_bar"/>
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/padStatus_ll_appBar">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/padStatus_tv_unPair">
+
+            <ImageView
+                android:id="@+id/padStatus_iv_pad"
+                android:layout_width="match_parent"
+                android:layout_height="350dp"
+                android:layout_centerInParent="true"
+                android:paddingEnd="0dp"
+                android:paddingLeft="35dp"
+                android:paddingRight="0dp"
+                android:paddingStart="35dp"
+                android:scaleType="fitCenter"
+                android:src="@mipmap/ic_pad_girl"/>
+
+        </RelativeLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:layout_alignTop="@+id/padStatus_tv_unPair"
+            android:background="@color/utilsDividerLB"/>
+
+        <TextView
+            android:id="@+id/padStatus_tv_unPair"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/bg_unpair"
+            android:gravity="center"
+            android:text="解除綁定"
+            android:textColor="@color/utilsTextB"
+            android:textSize="13sp"/>
+
+    </RelativeLayout>
+
+</RelativeLayout>

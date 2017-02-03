@@ -1,0 +1,48 @@
+<resources>
+
+    <style name="AppTheme" parent="JActivity">
+    </style>
+
+    <style name="dialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/dialog_enter_bottom</item>
+        <item name="android:windowExitAnimation">@anim/dialog_exit_bottom</item>
+    </style>
+
+    <style name="DialogTheme" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@style/dialogAnimation</item>
+    </style>
+
+    <style name="DialogLoadingTheme" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <!-- Widget -->
+    <style name="dialogLoadingStyle">
+        <item name="cpd_padding">0dp</item>
+        <item name="cpd_initialAngle">0</item>
+        <item name="cpd_maxSweepAngle">270</item>
+        <item name="cpd_minSweepAngle">1</item>
+        <item name="cpd_strokeSize">2dp</item>
+        <item name="cpd_strokeColor">@android:color/white</item>
+        <item name="cpd_strokeSecondaryColor">@android:color/transparent</item>
+        <item name="cpd_reverse">false</item>
+        <item name="cpd_rotateDuration">1000</item>
+        <item name="cpd_transformDuration">600</item>
+        <item name="cpd_keepDuration">200</item>
+        <item name="cpd_transformInterpolator">@android:anim/decelerate_interpolator</item>
+        <item name="pv_progressMode">indeterminate</item>
+        <item name="cpd_inAnimDuration">0</item>
+        <item name="cpd_outAnimDuration">@android:integer/config_mediumAnimTime</item>
+    </style>
+</resources>

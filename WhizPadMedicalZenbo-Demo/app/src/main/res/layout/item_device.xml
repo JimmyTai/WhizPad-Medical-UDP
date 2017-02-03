@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+    <RelativeLayout
+        android:id="@+id/itemDevice_rl_root"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:clickable="true">
+
+        <View
+            android:id="@+id/itemDevice_view_paired"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="15dp"
+            android:layout_marginStart="15dp"
+            android:background="@drawable/ic_paired"/>
+
+        <TextView
+            android:id="@+id/itemDevice_tv_ip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="15dp"
+            android:layout_marginStart="15dp"
+            android:layout_toEndOf="@+id/itemDevice_view_paired"
+            android:layout_toRightOf="@id/itemDevice_view_paired"
+            android:text="192.168.1.231"
+            android:textColor="@color/utilsTextB"
+            android:textSize="14sp"/>
+
+        <TextView
+            android:id="@+id/itemDevice_tv_id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="40dp"
+            android:layout_marginRight="40dp"
+            android:text="WP0001"
+            android:textColor="@color/utilsTextB"
+            android:textSize="25sp"/>
+
+        <ImageView
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="10dp"
+            android:layout_marginRight="10dp"
+            android:src="@mipmap/ic_arrow_right"/>
+
+    </RelativeLayout>
+</RelativeLayout>
