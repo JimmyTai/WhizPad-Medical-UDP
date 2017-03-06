@@ -10,18 +10,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jimmytai.library.utils.log.JLog;
-import com.jimmytai.library.whizpad_medical_zenbo.WhizPadClient;
-import com.jimmytai.library.whizpad_medical_zenbo.item.WhizPadInfo;
-import com.jimmytai.library.whizpad_medical_zenbo.item.WhizPadPairedInfo;
+import com.jimmytai.library.whizpad_medical_udp.WhizPadClient;
+import com.jimmytai.library.whizpad_medical_udp.item.WhizPadInfo;
+import com.jimmytai.library.whizpad_medical_udp.item.WhizPadPairedInfo;
 import com.jimmytai.whizpad_medical_zenbo.demo.R;
 import com.jimmytai.whizpad_medical_zenbo.demo.activity.MainActivity;
 import com.jimmytai.whizpad_medical_zenbo.demo.activity.PadStatusActivity;
 import com.jimmytai.whizpad_medical_zenbo.demo.dialog.LoadingDialog;
 import com.jimmytai.whizpad_medical_zenbo.demo.dialog.PasswordDialog;
-import com.jimmytai.whizpad_medical_zenbo.demo.thread.GetPairedInfoThread;
+import com.jimmytai.whizpad_medical_zenbo.demo.utils.WifiUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by JimmyTai on 2016/10/19.
@@ -118,34 +119,49 @@ public class DeviceAdapter extends BaseAdapter {
         TextView tv_ip, tv_id;
     }
 
-    public void getPairedInfoResult(final int result, WhizPadPairedInfo pairedInfo, final WhizPadInfo info) {
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (activity.loadingDialog != null && LoadingDialog.isShow)
-                    activity.loadingDialog.dismiss();
-                if (result == 1) {
-                    Intent intent = new Intent(activity, PadStatusActivity.class);
-                    intent.putExtra(PadStatusActivity.EXTRA_DEVICE, info);
-                    activity.startActivity(intent);
-                } else if (result == 2) {
+    private class MyActionListener extends WhizPadClient.ActionListener {
+
+        private WhizPadInfo info;
+
+        public MyActionListener(WhizPadInfo info) {
+            this.info = info;
+        }
+
+        @Override
+        public void onPairedInfo(WhizPadPairedInfo pairedInfo) {
+            if (activity.loadingDialog != null && LoadingDialog.isShow)
+                activity.loadingDialog.dismiss();
+            JLog.d(DEBUG, TAG, "onPairedInfo response: " + pairedInfo.getResponse());
+            if (pairedInfo.getResponse() == WhizPadPairedInfo.Response.Paired) {
+                String localIpAddr = WifiUtils.getIPv4Str(activity);
+                byte[] localMac = WifiUtils.getMacAddr();
+                String localMacAddr = localMac == null ? "00:00:00:00:00:00" : String.format(Locale.getDefault(),
+                        "%02X:%02X:%02X:%02X:%02X:%02X", localMac[0], localMac[1], localMac[2], localMac[3], localMac[4],
+                        localMac[5]);
+                if (pairedInfo.getMac().equals(localMacAddr)) {
+                    if (pairedInfo.getIp().equals(localIpAddr)) {
+                        Intent intent = new Intent(activity, PadStatusActivity.class);
+                        intent.putExtra(PadStatusActivity.EXTRA_DEVICE, info);
+                        activity.startActivity(intent);
+                    } else {
+                        activity.passwordDialog = PasswordDialog.newInstance(PasswordDialog.Page.IP_CHANGED, info);
+                        activity.passwordDialog.setCancelable(false);
+                        activity.passwordDialog.show(activity.getFragmentManager(), "PasswordDialog");
+                    }
+                } else {
                     activity.passwordDialog = PasswordDialog.newInstance(PasswordDialog.Page.ALARM_PAIRED, info);
                     activity.passwordDialog.setCancelable(false);
                     activity.passwordDialog.show(activity.getFragmentManager(), "PasswordDialog");
-                } else if (result == 3) {
-                    /* not paired */
-                    activity.passwordDialog = PasswordDialog.newInstance(PasswordDialog.Page.SET_PASSWORD, info);
-                    activity.passwordDialog.setCancelable(false);
-                    activity.passwordDialog.show(activity.getFragmentManager(), "PasswordDialog");
-                } else if (result == 4) {
-                    activity.passwordDialog = PasswordDialog.newInstance(PasswordDialog.Page.IP_CHANGED, info);
-                    activity.passwordDialog.setCancelable(false);
-                    activity.passwordDialog.show(activity.getFragmentManager(), "PasswordDialog");
-                } else {
-                    Toast.makeText(activity, "發生不明問題，請稍後再試！", Toast.LENGTH_SHORT).show();
                 }
+            } else if (pairedInfo.getResponse() == WhizPadPairedInfo.Response.Not_Paired) {
+                    /* not paired */
+                activity.passwordDialog = PasswordDialog.newInstance(PasswordDialog.Page.SET_PASSWORD, info);
+                activity.passwordDialog.setCancelable(false);
+                activity.passwordDialog.show(activity.getFragmentManager(), "PasswordDialog");
+            } else {
+                Toast.makeText(activity, "發生不明問題，請稍後再試！", Toast.LENGTH_SHORT).show();
             }
-        });
+        }
     }
 
     private class MyClickListener implements View.OnClickListener {
@@ -158,12 +174,11 @@ public class DeviceAdapter extends BaseAdapter {
 
         @Override
         public void onClick(View v) {
-            if (GetPairedInfoThread.isRunning)
-                return;
-            if (activity.loadingDialog != null && !LoadingDialog.isShow) {
-                activity.loadingDialog.show(activity.getFragmentManager(), "LoadingDialog");
+            if (activity.whizPadClient.getPairedInfo(list.get(position), new MyActionListener(list.get(position)))) {
+                if (activity.loadingDialog != null && !LoadingDialog.isShow) {
+                    activity.loadingDialog.show(activity.getFragmentManager(), "LoadingDialog");
+                }
             }
-            new GetPairedInfoThread(activity, client, DeviceAdapter.this, list.get(position)).start();
         }
     }
 }

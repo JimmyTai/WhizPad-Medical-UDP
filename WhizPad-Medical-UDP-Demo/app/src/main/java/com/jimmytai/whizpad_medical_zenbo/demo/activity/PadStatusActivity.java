@@ -8,13 +8,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jimmytai.library.utils.activity.JActivity;
-import com.jimmytai.library.whizpad_medical_zenbo.item.WhizPadEvent;
-import com.jimmytai.library.whizpad_medical_zenbo.item.WhizPadInfo;
-import com.jimmytai.library.whizpad_medical_zenbo.item.WhizPadUnPairingAck;
+import com.jimmytai.library.utils.log.JLog;
+import com.jimmytai.library.whizpad_medical_udp.WhizPadClient;
+import com.jimmytai.library.whizpad_medical_udp.item.WhizPadEvent;
+import com.jimmytai.library.whizpad_medical_udp.item.WhizPadInfo;
+import com.jimmytai.library.whizpad_medical_udp.item.WhizPadManufacture;
+import com.jimmytai.library.whizpad_medical_udp.item.WhizPadUnPairingResult;
 import com.jimmytai.whizpad_medical_zenbo.demo.R;
 import com.jimmytai.whizpad_medical_zenbo.demo.dialog.LoadingDialog;
 import com.jimmytai.whizpad_medical_zenbo.demo.dialog.UnpairDialog;
-import com.jimmytai.whizpad_medical_zenbo.demo.thread.PadStatusThread;
 
 /**
  * Created by JimmyTai on 2016/12/22.
@@ -22,7 +24,7 @@ import com.jimmytai.whizpad_medical_zenbo.demo.thread.PadStatusThread;
 
 public class PadStatusActivity extends JActivity {
 
-    private static final String TAG = "PadStatusActivity";
+    private static final String TAG = PadStatusActivity.class.getSimpleName();
     private static final boolean DEBUG = false;
 
     public static final String EXTRA_DEVICE = "EXTRA_DEVICE";
@@ -32,11 +34,13 @@ public class PadStatusActivity extends JActivity {
     private int[] PAD_STATUS_PHOTO_ID = new int[]{R.mipmap.ic_pad_girl, R.mipmap.ic_pad_side_girl, R.mipmap.ic_pad_sit_girl, R.mipmap
             .ic_pad_lie_girl};
 
+    public WhizPadClient client;
+    public MyPadEventCallback myPadEventCallback;
+
     public LoadingDialog loadingDialog;
     public UnpairDialog unpairDialog;
 
-    private WhizPadInfo item;
-    private PadStatusThread padStatusThread;
+    public WhizPadInfo info;
 
     private TextView tv_appBarTitle, tv_unpair;
     private ImageView iv_pad;
@@ -59,22 +63,23 @@ public class PadStatusActivity extends JActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        item = getIntent().getParcelableExtra(EXTRA_DEVICE);
+        info = getIntent().getParcelableExtra(EXTRA_DEVICE);
         getFonts();
         findViews();
         createDialog();
+        client = WhizPadClient.getInstance();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        startPadStatusListen();
+        client.startListenEvent(info, myPadEventCallback = new MyPadEventCallback());
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        stopPadStatusListen();
+        client.stopListenEvent();
     }
 
     @Override
@@ -84,60 +89,55 @@ public class PadStatusActivity extends JActivity {
 
     /* --- Functions --- */
 
-    public void startPadStatusListen() {
-        if (PadStatusThread.isRunning && padStatusThread != null)
-            padStatusThread.stopListening();
-        padStatusThread = new PadStatusThread(this, item);
-        padStatusThread.start();
-    }
-
-    public void stopPadStatusListen() {
-        if (PadStatusThread.isRunning && padStatusThread != null)
-            padStatusThread.stopListening();
-    }
-
-    public void unPairPadResult(final WhizPadUnPairingAck.Response response) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (loadingDialog != null && LoadingDialog.isShow)
-                    loadingDialog.dismiss();
-                String reason = null;
-                if (response == WhizPadUnPairingAck.Response.FAIL) {
-                    reason = "解除配對失敗";
-                    if (unpairDialog != null && UnpairDialog.isShow)
-                        unpairDialog.dismiss();
-                } else if (response == WhizPadUnPairingAck.Response.FAIL_PASSWORD_INCORRECT) {
-                    reason = "密碼錯誤";
-                    if (unpairDialog != null)
-                        unpairDialog.setEnable();
-                } else if (response == WhizPadUnPairingAck.Response.FAIL_MAC_INCORRECT) {
-                    reason = "不是配對的裝置，無法解除配對";
-                    if (unpairDialog != null && UnpairDialog.isShow)
-                        unpairDialog.dismiss();
-                } else if (response == WhizPadUnPairingAck.Response.SUCCESS) {
-                    reason = "解除配對成功";
-                    if (unpairDialog != null && UnpairDialog.isShow)
-                        unpairDialog.dismiss();
-                }
-                if (reason != null)
-                    Toast.makeText(PadStatusActivity.this, reason, Toast.LENGTH_SHORT).show();
-                if (response == WhizPadUnPairingAck.Response.SUCCESS)
-                    finish();
-            }
-        });
-    }
-
-    public void updatePadStatus(final WhizPadEvent.Status status) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                iv_pad.setImageResource(PAD_STATUS_PHOTO_ID[status.ordinal()]);
-            }
-        });
+    public void unPairPadResult(final WhizPadUnPairingResult result) {
+        if (loadingDialog != null && LoadingDialog.isShow)
+            loadingDialog.dismiss();
+        WhizPadUnPairingResult.Response response = result.getResponse();
+        String reason = null;
+        if (response == WhizPadUnPairingResult.Response.FAIL) {
+            reason = "解除配對失敗";
+            if (unpairDialog != null && UnpairDialog.isShow)
+                unpairDialog.dismiss();
+        } else if (response == WhizPadUnPairingResult.Response.FAIL_PASSWORD_INCORRECT) {
+            reason = "密碼錯誤";
+            if (unpairDialog != null)
+                unpairDialog.setEnable();
+        } else if (response == WhizPadUnPairingResult.Response.FAIL_MAC_INCORRECT) {
+            reason = "不是配對的裝置，無法解除配對";
+            if (unpairDialog != null && UnpairDialog.isShow)
+                unpairDialog.dismiss();
+        } else if (response == WhizPadUnPairingResult.Response.SUCCESS) {
+            reason = "解除配對成功";
+            if (unpairDialog != null && UnpairDialog.isShow)
+                unpairDialog.dismiss();
+        }
+        if (reason != null)
+            Toast.makeText(PadStatusActivity.this, reason, Toast.LENGTH_SHORT).show();
+        if (response == WhizPadUnPairingResult.Response.SUCCESS)
+            finish();
     }
 
     /* --- Listener --- */
+
+    private class MyPadEventCallback implements WhizPadClient.EventCallback {
+
+        @Override
+        public void onEvent(WhizPadEvent event) {
+            iv_pad.setImageResource(PAD_STATUS_PHOTO_ID[event.getStatus().ordinal()]);
+        }
+
+        @Override
+        public void onStatus(String deviceId, boolean isOnline) {
+            JLog.d(DEBUG, TAG, "床墊目前： " + (isOnline ? "上線" : "離線"));
+            Toast.makeText(jActivity, "床墊目前： " + (isOnline ? "上線" : "離線"), Toast.LENGTH_SHORT).show();
+            if (!isOnline) {
+                iv_pad.setImageResource(R.mipmap.ic_pad_girl_offline);
+            } else {
+                iv_pad.setImageResource(R.mipmap.ic_pad_girl);
+                client.getLatestEvent(info);
+            }
+        }
+    }
 
     private class MyClickListener implements View.OnClickListener {
 
@@ -147,8 +147,18 @@ public class PadStatusActivity extends JActivity {
                 case R.id.padStatus_tv_unPair:
                     if (unpairDialog != null && !UnpairDialog.isShow) {
                         unpairDialog.show(getFragmentManager(), "UnpairDialog");
-                        stopPadStatusListen();
+                        client.stopListenEvent();
                     }
+                    break;
+                case R.id.padStatus_iv_pad:
+                    client.getManufactureInfo(info, new WhizPadClient.ActionListener() {
+                        @Override
+                        public void onManufactureInfo(WhizPadManufacture manufacture) {
+                            super.onManufactureInfo(manufacture);
+                            Toast.makeText(jActivity, "製造商： " + manufacture.getCompany() + "\n硬體版本： " + manufacture.getHardwareVersion()
+                                    + "\n軟體版本： " + manufacture.getSoftwareVersion(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
                     break;
             }
         }
@@ -159,7 +169,7 @@ public class PadStatusActivity extends JActivity {
     private void createDialog() {
         loadingDialog = LoadingDialog.newInstance();
         loadingDialog.setCancelable(false);
-        unpairDialog = UnpairDialog.newInstance(item);
+        unpairDialog = UnpairDialog.newInstance(info);
         unpairDialog.setCancelable(false);
     }
 
@@ -172,6 +182,7 @@ public class PadStatusActivity extends JActivity {
         tv_appBarTitle = (TextView) findViewById(R.id.padStatus_tv_appBarTitle);
         tv_appBarTitle.setTypeface(FONT_LIGHT);
         iv_pad = (ImageView) findViewById(R.id.padStatus_iv_pad);
+        iv_pad.setOnClickListener(new MyClickListener());
         tv_unpair = (TextView) findViewById(R.id.padStatus_tv_unPair);
         tv_unpair.setTypeface(FONT_LIGHT);
         tv_unpair.setOnClickListener(new MyClickListener());

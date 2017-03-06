@@ -47,6 +47,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="350dp"
                 android:layout_centerInParent="true"
+                android:clickable="true"
                 android:paddingEnd="0dp"
                 android:paddingLeft="35dp"
                 android:paddingRight="0dp"

@@ -14,11 +14,14 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.jimmytai.library.utils.fragment.JDialogFragment;
+import com.jimmytai.library.utils.lifecycle.JLifecycle;
 import com.jimmytai.library.utils.log.JLog;
-import com.jimmytai.library.whizpad_medical_zenbo.item.WhizPadInfo;
+import com.jimmytai.library.whizpad_medical_udp.WhizPadClient;
+import com.jimmytai.library.whizpad_medical_udp.item.WhizPadInfo;
+import com.jimmytai.library.whizpad_medical_udp.item.WhizPadUnPairingResult;
 import com.jimmytai.whizpad_medical_zenbo.demo.R;
 import com.jimmytai.whizpad_medical_zenbo.demo.activity.PadStatusActivity;
-import com.jimmytai.whizpad_medical_zenbo.demo.thread.UnpairPadThread;
+import com.jimmytai.whizpad_medical_zenbo.demo.utils.WifiUtils;
 
 /**
  * Created by JimmyTai on 2016/8/19.
@@ -88,10 +91,27 @@ public class UnpairDialog extends JDialogFragment {
         super.onDismiss(dialog);
         isShow = false;
         JLog.d(DEBUG, TAG, "dismiss UnpairDialog");
-        activity.startPadStatusListen();
+        activity.client.startListenEvent(activity.info, activity.myPadEventCallback);
     }
 
     /* --- Listener --- */
+
+    private class MyActionListener extends WhizPadClient.ActionListener {
+
+        private WhizPadInfo info;
+
+        public MyActionListener(WhizPadInfo info) {
+            this.info = info;
+        }
+
+        @Override
+        public void onUnpairingResult(WhizPadUnPairingResult result) {
+            super.onUnpairingResult(result);
+            if (activity.jLifeCycle != JLifecycle.ON_DESTROY) {
+                activity.unPairPadResult(result);
+            }
+        }
+    }
 
     private class MyClickListener implements View.OnClickListener {
 
@@ -110,7 +130,7 @@ public class UnpairDialog extends JDialogFragment {
                         tv_confirm.setEnabled(false);
                         tv_cancel.setEnabled(false);
                         et_password.setEnabled(false);
-                        new UnpairPadThread(activity, info, password).start();
+                        activity.client.unpair(info, password, WifiUtils.getMacAddr(), new MyActionListener(info));
                         break;
                 }
         }

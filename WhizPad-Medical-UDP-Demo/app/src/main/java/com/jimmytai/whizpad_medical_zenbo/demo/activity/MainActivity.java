@@ -1,9 +1,7 @@
 package com.jimmytai.whizpad_medical_zenbo.demo.activity;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ListView;
@@ -13,13 +11,13 @@ import android.widget.Toast;
 
 import com.jimmytai.library.utils.activity.JActivity;
 import com.jimmytai.library.utils.log.JLog;
-import com.jimmytai.library.whizpad_medical_zenbo.WhizPadClient;
-import com.jimmytai.library.whizpad_medical_zenbo.item.WhizPadInfo;
+import com.jimmytai.library.whizpad_medical_udp.WhizPadClient;
+import com.jimmytai.library.whizpad_medical_udp.item.WhizPadInfo;
+import com.jimmytai.library.whizpad_medical_udp.item.WhizPadPairingResult;
 import com.jimmytai.whizpad_medical_zenbo.demo.R;
 import com.jimmytai.whizpad_medical_zenbo.demo.adapter.DeviceAdapter;
 import com.jimmytai.whizpad_medical_zenbo.demo.dialog.LoadingDialog;
 import com.jimmytai.whizpad_medical_zenbo.demo.dialog.PasswordDialog;
-import com.jimmytai.whizpad_medical_zenbo.demo.thread.DiscoverDeviceThread;
 
 import java.util.ArrayList;
 
@@ -31,11 +29,9 @@ public class MainActivity extends JActivity {
     public Typeface FONT_LIGHT, FONT_BOLD;
 
     public WhizPadClient whizPadClient;
+    private MyScanCallback myScanCallback;
 
-    private DiscoverDeviceThread discoverDeviceThread;
     private DeviceAdapter deviceAdapter;
-
-    public WifiManager wifiManager;
 
     public PasswordDialog passwordDialog;
     public LoadingDialog loadingDialog;
@@ -62,28 +58,24 @@ public class MainActivity extends JActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        whizPadClient = new WhizPadClient(getApplicationContext());
         getFonts();
         createDialog();
         findViews();
+        whizPadClient = WhizPadClient.getInstance();
+        whizPadClient.setScanCallback(myScanCallback = new MyScanCallback());
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (DiscoverDeviceThread.isRunning && discoverDeviceThread != null)
-            discoverDeviceThread.stopListening();
-        discoverDeviceThread = new DiscoverDeviceThread(this, whizPadClient);
-        discoverDeviceThread.start();
+        whizPadClient.startScan();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         deviceAdapter.remove();
-        if (DiscoverDeviceThread.isRunning && discoverDeviceThread != null)
-            discoverDeviceThread.stopListening();
+        whizPadClient.stopScan();
     }
 
     @Override
@@ -92,6 +84,14 @@ public class MainActivity extends JActivity {
     }
 
     /* --- Listener --- */
+
+    private class MyScanCallback implements WhizPadClient.ScanCallback {
+
+        @Override
+        public void onScan(WhizPadInfo info) {
+            deviceAdapter.add(info);
+        }
+    }
 
     private class MyClickListener implements View.OnClickListener {
 
@@ -114,47 +114,36 @@ public class MainActivity extends JActivity {
 
     /* --- Functions --- */
 
-    public void passwordResult(final int result, final WhizPadInfo info) {
+    public void passwordResult(final WhizPadPairingResult result, final WhizPadInfo info) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                JLog.d(DEBUG, TAG, "password result -> " + result);
+                JLog.d(DEBUG, TAG, "password result -> " + result.getResponse());
                 if (loadingDialog != null && LoadingDialog.isShow)
                     loadingDialog.dismiss();
                 String reason = null;
-                switch (result) {
-                    case 0x00:
+                switch (result.getResponse()) {
+                    case FAIL:
                         reason = "配對失敗";
                         if (passwordDialog != null && PasswordDialog.isShow)
                             passwordDialog.dismiss();
                         break;
-                    case 0x01:
+                    case SUCCESS:
                         reason = "配對成功";
                         if (passwordDialog != null && PasswordDialog.isShow)
                             passwordDialog.dismiss();
-                        if (DiscoverDeviceThread.isRunning && discoverDeviceThread != null)
-                            discoverDeviceThread.stopListening();
+                        whizPadClient.stopScan();
                         Intent intent = new Intent(jActivity, PadStatusActivity.class);
                         intent.putExtra(PadStatusActivity.EXTRA_DEVICE, info);
                         startActivity(intent);
                         break;
-                    case 0x02:
+                    case FAIL_INCORRECT_PASSWORD:
                         reason = "密碼錯誤";
                         if (passwordDialog != null)
                             passwordDialog.setEnable();
                         break;
                 }
-                if (reason != null)
-                    Toast.makeText(MainActivity.this, reason, Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    public void discoverDevice(final WhizPadInfo item) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                deviceAdapter.add(item);
+                Toast.makeText(MainActivity.this, reason, Toast.LENGTH_SHORT).show();
             }
         });
     }

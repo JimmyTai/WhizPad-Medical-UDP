@@ -10,14 +10,16 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.jimmytai.library.utils.JResUtils;
 import com.jimmytai.library.utils.JScreenUtils;
 import com.jimmytai.library.utils.activity.JActivity;
-import com.jimmytai.library.whizpad_medical_zenbo.item.WhizPadEvent;
-import com.jimmytai.library.whizpad_medical_zenbo.item.WhizPadInfo;
+import com.jimmytai.library.utils.log.JLog;
+import com.jimmytai.library.whizpad_medical_udp.WhizPadClient;
+import com.jimmytai.library.whizpad_medical_udp.item.WhizPadEvent;
+import com.jimmytai.library.whizpad_medical_udp.item.WhizPadInfo;
 import com.jimmytai.whizpad_medical_zenbo.demo.R;
-import com.jimmytai.whizpad_medical_zenbo.demo.thread.MultiplePadStatusThread;
 
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +39,8 @@ public class MultiplePadActivity extends JActivity {
 
     public Typeface FONT_LIGHT;
 
-    private MultiplePadStatusThread multiplePadStatusThread;
+    public WhizPadClient client;
+    private MyPadEventCallback myPadEventCallback;
 
     private HashMap<String, WhizPadEvent.Status> statusHashMap = new HashMap<>();
     private List<WhizPadInfo> list;
@@ -70,18 +73,19 @@ public class MultiplePadActivity extends JActivity {
         getFonts();
         findViews();
         setFooterViews();
+        client = WhizPadClient.getInstance();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        startPadStatusListen();
+        client.startListenEvent(list, myPadEventCallback = new MyPadEventCallback());
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        stopPadStatusListen();
+        client.stopListenEvent();
     }
 
     @Override
@@ -90,17 +94,6 @@ public class MultiplePadActivity extends JActivity {
     }
 
     /* --- Functions --- */
-    public void startPadStatusListen() {
-        if (MultiplePadStatusThread.isRunning && multiplePadStatusThread != null)
-            multiplePadStatusThread.stopListening();
-        multiplePadStatusThread = new MultiplePadStatusThread(this, 55413, list);
-        multiplePadStatusThread.start();
-    }
-
-    public void stopPadStatusListen() {
-        if (MultiplePadStatusThread.isRunning && multiplePadStatusThread != null)
-            multiplePadStatusThread.stopListening();
-    }
 
     public void updatePadEvent(final WhizPadEvent event) {
         statusHashMap.put(event.getDeviceId(), event.getStatus());
@@ -115,6 +108,23 @@ public class MultiplePadActivity extends JActivity {
     }
 
     /* --- Listener --- */
+
+    private class MyPadEventCallback implements WhizPadClient.EventCallback {
+
+        @Override
+        public void onEvent(WhizPadEvent event) {
+            statusHashMap.put(event.getDeviceId(), event.getStatus());
+            if (!list.get(selectedPos).getDeviceId().equals(event.getDeviceId()))
+                return;
+            iv_pad.setImageResource(PAD_STATUS_PHOTO_ID[event.getStatus().ordinal()]);
+        }
+
+        @Override
+        public void onStatus(String deviceId, boolean isOnline) {
+            JLog.d(DEBUG, TAG, "床墊目前： " + (isOnline ? "上線" : "離線"));
+            Toast.makeText(jActivity, "床墊目前： " + (isOnline ? "上線" : "離線"), Toast.LENGTH_SHORT).show();
+        }
+    }
 
     private class MyClickListener implements View.OnClickListener {
 

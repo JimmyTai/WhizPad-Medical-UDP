@@ -14,10 +14,13 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.jimmytai.library.utils.fragment.JDialogFragment;
-import com.jimmytai.library.whizpad_medical_zenbo.item.WhizPadInfo;
+import com.jimmytai.library.utils.lifecycle.JLifecycle;
+import com.jimmytai.library.whizpad_medical_udp.WhizPadClient;
+import com.jimmytai.library.whizpad_medical_udp.item.WhizPadInfo;
+import com.jimmytai.library.whizpad_medical_udp.item.WhizPadPairingResult;
 import com.jimmytai.whizpad_medical_zenbo.demo.R;
 import com.jimmytai.whizpad_medical_zenbo.demo.activity.MainActivity;
-import com.jimmytai.whizpad_medical_zenbo.demo.thread.PasswordThread;
+import com.jimmytai.whizpad_medical_zenbo.demo.utils.WifiUtils;
 
 /**
  * Created by JimmyTai on 2016/8/19.
@@ -99,6 +102,23 @@ public class PasswordDialog extends JDialogFragment {
 
     /* --- Listener --- */
 
+    public class MyPairListener extends WhizPadClient.ActionListener {
+
+        private WhizPadInfo info;
+
+        public MyPairListener(WhizPadInfo info) {
+            this.info = info;
+        }
+
+        @Override
+        public void onPairingResult(WhizPadPairingResult result) {
+            super.onPairingResult(result);
+            if (activity.jLifeCycle != JLifecycle.ON_DESTROY) {
+                activity.passwordResult(result, info);
+            }
+        }
+    }
+
     private class MyClickListener implements View.OnClickListener {
 
         @Override
@@ -117,7 +137,8 @@ public class PasswordDialog extends JDialogFragment {
                             tv_confirm.setEnabled(false);
                             tv_cancel.setEnabled(false);
                             et_password.setEnabled(false);
-                            new PasswordThread(activity, activity.whizPadClient, item, password).start();
+                            activity.whizPadClient.pair(item, password, WifiUtils.getMacAddr(), WifiUtils.getIPv4(activity
+                                    .getApplicationContext()), new MyPairListener(item));
                         }
                         break;
                 }

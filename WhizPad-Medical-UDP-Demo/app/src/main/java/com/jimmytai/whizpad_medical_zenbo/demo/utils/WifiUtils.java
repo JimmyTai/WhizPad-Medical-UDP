@@ -17,7 +17,7 @@ import java.util.Locale;
 public class WifiUtils {
 
     public static byte[] getIPv4(Context context) {
-        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         int ip = wifiManager.getConnectionInfo().getIpAddress();
         if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN))
             ip = Integer.reverseBytes(ip);
@@ -25,7 +25,7 @@ public class WifiUtils {
     }
 
     public static String getIPv4Str(Context context) {
-        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         int ip = wifiManager.getConnectionInfo().getIpAddress();
         if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN))
             ip = Integer.reverseBytes(ip);

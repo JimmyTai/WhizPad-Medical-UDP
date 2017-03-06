@@ -1,1 +1,1 @@
-include ':app', ':whizpad-medical-zenbo'
+include ':app'
