@@ -12,7 +12,6 @@ import com.jimmytai.library.utils.log.JLog;
 import com.jimmytai.library.whizpad_medical_udp.WhizPadClient;
 import com.jimmytai.library.whizpad_medical_udp.item.WhizPadEvent;
 import com.jimmytai.library.whizpad_medical_udp.item.WhizPadInfo;
-import com.jimmytai.library.whizpad_medical_udp.item.WhizPadManufacture;
 import com.jimmytai.library.whizpad_medical_udp.item.WhizPadUnPairingResult;
 import com.jimmytai.whizpad_medical_zenbo.demo.R;
 import com.jimmytai.whizpad_medical_zenbo.demo.dialog.LoadingDialog;
@@ -73,7 +72,7 @@ public class PadStatusActivity extends JActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        client.startListenEvent(info, myPadEventCallback = new MyPadEventCallback());
+        client.listenEvent(info, myPadEventCallback = new MyPadEventCallback());
     }
 
     @Override
@@ -110,6 +109,10 @@ public class PadStatusActivity extends JActivity {
             reason = "解除配對成功";
             if (unpairDialog != null && UnpairDialog.isShow)
                 unpairDialog.dismiss();
+        } else if (response == WhizPadUnPairingResult.Response.TIMEOUT) {
+            reason = "逾時錯誤";
+            if (unpairDialog != null && UnpairDialog.isShow)
+                unpairDialog.dismiss();
         }
         if (reason != null)
             Toast.makeText(PadStatusActivity.this, reason, Toast.LENGTH_SHORT).show();
@@ -127,9 +130,9 @@ public class PadStatusActivity extends JActivity {
         }
 
         @Override
-        public void onStatus(String deviceId, boolean isOnline) {
-            JLog.d(DEBUG, TAG, "床墊目前： " + (isOnline ? "上線" : "離線"));
-            Toast.makeText(jActivity, "床墊目前： " + (isOnline ? "上線" : "離線"), Toast.LENGTH_SHORT).show();
+        public void onStatus(WhizPadInfo info, boolean isOnline) {
+            JLog.d(DEBUG, TAG, "床墊 " + info.getDeviceId() + " 目前： " + (isOnline ? "上線" : "離線"));
+            Toast.makeText(jActivity, "床墊 " + info.getDeviceId() + " 目前： " + (isOnline ? "上線" : "離線"), Toast.LENGTH_SHORT).show();
             if (!isOnline) {
                 iv_pad.setImageResource(R.mipmap.ic_pad_girl_offline);
             } else {
@@ -145,20 +148,8 @@ public class PadStatusActivity extends JActivity {
         public void onClick(View view) {
             switch (view.getId()) {
                 case R.id.padStatus_tv_unPair:
-                    if (unpairDialog != null && !UnpairDialog.isShow) {
-                        unpairDialog.show(getFragmentManager(), "UnpairDialog");
-                        client.stopListenEvent();
-                    }
-                    break;
-                case R.id.padStatus_iv_pad:
-                    client.getManufactureInfo(info, new WhizPadClient.ActionListener() {
-                        @Override
-                        public void onManufactureInfo(WhizPadManufacture manufacture) {
-                            super.onManufactureInfo(manufacture);
-                            Toast.makeText(jActivity, "製造商： " + manufacture.getCompany() + "\n硬體版本： " + manufacture.getHardwareVersion()
-                                    + "\n軟體版本： " + manufacture.getSoftwareVersion(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                    if (unpairDialog != null && !UnpairDialog.isShow)
+                        unpairDialog.show(getFragmentManager(), UnpairDialog.class.getSimpleName());
                     break;
             }
         }
@@ -182,7 +173,6 @@ public class PadStatusActivity extends JActivity {
         tv_appBarTitle = (TextView) findViewById(R.id.padStatus_tv_appBarTitle);
         tv_appBarTitle.setTypeface(FONT_LIGHT);
         iv_pad = (ImageView) findViewById(R.id.padStatus_iv_pad);
-        iv_pad.setOnClickListener(new MyClickListener());
         tv_unpair = (TextView) findViewById(R.id.padStatus_tv_unPair);
         tv_unpair.setTypeface(FONT_LIGHT);
         tv_unpair.setOnClickListener(new MyClickListener());

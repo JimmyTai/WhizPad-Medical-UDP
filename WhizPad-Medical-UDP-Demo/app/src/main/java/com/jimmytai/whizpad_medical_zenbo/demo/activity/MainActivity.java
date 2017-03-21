@@ -81,6 +81,7 @@ public class MainActivity extends JActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        whizPadClient.leave();
     }
 
     /* --- Listener --- */
@@ -115,37 +116,37 @@ public class MainActivity extends JActivity {
     /* --- Functions --- */
 
     public void passwordResult(final WhizPadPairingResult result, final WhizPadInfo info) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                JLog.d(DEBUG, TAG, "password result -> " + result.getResponse());
-                if (loadingDialog != null && LoadingDialog.isShow)
-                    loadingDialog.dismiss();
-                String reason = null;
-                switch (result.getResponse()) {
-                    case FAIL:
-                        reason = "配對失敗";
-                        if (passwordDialog != null && PasswordDialog.isShow)
-                            passwordDialog.dismiss();
-                        break;
-                    case SUCCESS:
-                        reason = "配對成功";
-                        if (passwordDialog != null && PasswordDialog.isShow)
-                            passwordDialog.dismiss();
-                        whizPadClient.stopScan();
-                        Intent intent = new Intent(jActivity, PadStatusActivity.class);
-                        intent.putExtra(PadStatusActivity.EXTRA_DEVICE, info);
-                        startActivity(intent);
-                        break;
-                    case FAIL_INCORRECT_PASSWORD:
-                        reason = "密碼錯誤";
-                        if (passwordDialog != null)
-                            passwordDialog.setEnable();
-                        break;
-                }
-                Toast.makeText(MainActivity.this, reason, Toast.LENGTH_SHORT).show();
-            }
-        });
+        JLog.d(DEBUG, TAG, "password result -> " + result.getResponse());
+        if (loadingDialog != null && LoadingDialog.isShow)
+            loadingDialog.dismiss();
+        String reason = null;
+        switch (result.getResponse()) {
+            case FAIL:
+                reason = "配對失敗";
+                if (passwordDialog != null && PasswordDialog.isShow)
+                    passwordDialog.dismiss();
+                break;
+            case SUCCESS:
+                reason = "配對成功";
+                if (passwordDialog != null && PasswordDialog.isShow)
+                    passwordDialog.dismiss();
+                whizPadClient.stopScan();
+                Intent intent = new Intent(jActivity, PadStatusActivity.class);
+                intent.putExtra(PadStatusActivity.EXTRA_DEVICE, info);
+                startActivity(intent);
+                break;
+            case FAIL_INCORRECT_PASSWORD:
+                reason = "密碼錯誤";
+                if (passwordDialog != null)
+                    passwordDialog.setEnable();
+                break;
+            case TIMEOUT:
+                reason = "逾時錯誤";
+                if (passwordDialog != null)
+                    passwordDialog.setEnable();
+                break;
+        }
+        Toast.makeText(MainActivity.this, reason, Toast.LENGTH_SHORT).show();
     }
 
     /* --- Views --- */

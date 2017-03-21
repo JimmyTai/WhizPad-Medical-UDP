@@ -32,5 +32,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.github.rey5137:material:1.2.4'
     compile 'com.github.JimmyTai:Android-Utils:v1.0.2'
-    compile 'com.jimmytai.library:WhizPad-Medical-UDP:2.0.0'
+    compile 'com.jimmytai.library:WhizPad-Medical-UDP:2.1.0'
 }

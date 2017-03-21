@@ -16,7 +16,7 @@ import com.jimmytai.whizpad_medical_zenbo.demo.R;
  */
 public class LoadingDialog extends JDialogFragment {
 
-    private static final String TAG = "LoadingDialog";
+    private static final String TAG = LoadingDialog.class.getSimpleName();
     private static final boolean DEBUG = false;
     public static boolean isShow = false;
 

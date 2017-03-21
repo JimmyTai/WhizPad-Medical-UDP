@@ -132,7 +132,7 @@ public class DeviceAdapter extends BaseAdapter {
             if (activity.loadingDialog != null && LoadingDialog.isShow)
                 activity.loadingDialog.dismiss();
             JLog.d(DEBUG, TAG, "onPairedInfo response: " + pairedInfo.getResponse());
-            if (pairedInfo.getResponse() == WhizPadPairedInfo.Response.Paired) {
+            if (pairedInfo.getResponse() == WhizPadPairedInfo.Response.PAIRED) {
                 String localIpAddr = WifiUtils.getIPv4Str(activity);
                 byte[] localMac = WifiUtils.getMacAddr();
                 String localMacAddr = localMac == null ? "00:00:00:00:00:00" : String.format(Locale.getDefault(),
@@ -153,7 +153,7 @@ public class DeviceAdapter extends BaseAdapter {
                     activity.passwordDialog.setCancelable(false);
                     activity.passwordDialog.show(activity.getFragmentManager(), "PasswordDialog");
                 }
-            } else if (pairedInfo.getResponse() == WhizPadPairedInfo.Response.Not_Paired) {
+            } else if (pairedInfo.getResponse() == WhizPadPairedInfo.Response.NOT_PAIRED) {
                     /* not paired */
                 activity.passwordDialog = PasswordDialog.newInstance(PasswordDialog.Page.SET_PASSWORD, info);
                 activity.passwordDialog.setCancelable(false);
@@ -176,7 +176,7 @@ public class DeviceAdapter extends BaseAdapter {
         public void onClick(View v) {
             if (activity.whizPadClient.getPairedInfo(list.get(position), new MyActionListener(list.get(position)))) {
                 if (activity.loadingDialog != null && !LoadingDialog.isShow) {
-                    activity.loadingDialog.show(activity.getFragmentManager(), "LoadingDialog");
+                    activity.loadingDialog.show(activity.getFragmentManager(), LoadingDialog.class.getSimpleName());
                 }
             }
         }

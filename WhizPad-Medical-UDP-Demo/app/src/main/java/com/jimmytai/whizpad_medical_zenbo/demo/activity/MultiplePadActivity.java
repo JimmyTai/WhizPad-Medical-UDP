@@ -42,7 +42,7 @@ public class MultiplePadActivity extends JActivity {
     public WhizPadClient client;
     private MyPadEventCallback myPadEventCallback;
 
-    private HashMap<String, WhizPadEvent.Status> statusHashMap = new HashMap<>();
+    private HashMap<String, Integer> statusHashMap = new HashMap<>();
     private List<WhizPadInfo> list;
     private int selectedPos = 0;
 
@@ -79,7 +79,7 @@ public class MultiplePadActivity extends JActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        client.startListenEvent(list, myPadEventCallback = new MyPadEventCallback());
+        client.listenEvent(list, myPadEventCallback = new MyPadEventCallback());
     }
 
     @Override
@@ -93,36 +93,26 @@ public class MultiplePadActivity extends JActivity {
         super.onDestroy();
     }
 
-    /* --- Functions --- */
-
-    public void updatePadEvent(final WhizPadEvent event) {
-        statusHashMap.put(event.getDeviceId(), event.getStatus());
-        if (!list.get(selectedPos).getDeviceId().equals(event.getDeviceId()))
-            return;
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                iv_pad.setImageResource(PAD_STATUS_PHOTO_ID[event.getStatus().ordinal()]);
-            }
-        });
-    }
-
     /* --- Listener --- */
 
     private class MyPadEventCallback implements WhizPadClient.EventCallback {
 
         @Override
         public void onEvent(WhizPadEvent event) {
-            statusHashMap.put(event.getDeviceId(), event.getStatus());
+            statusHashMap.put(event.getDeviceId(), event.getStatus().ordinal());
             if (!list.get(selectedPos).getDeviceId().equals(event.getDeviceId()))
                 return;
             iv_pad.setImageResource(PAD_STATUS_PHOTO_ID[event.getStatus().ordinal()]);
         }
 
         @Override
-        public void onStatus(String deviceId, boolean isOnline) {
-            JLog.d(DEBUG, TAG, "床墊目前： " + (isOnline ? "上線" : "離線"));
-            Toast.makeText(jActivity, "床墊目前： " + (isOnline ? "上線" : "離線"), Toast.LENGTH_SHORT).show();
+        public void onStatus(WhizPadInfo info, boolean isOnline) {
+            JLog.d(DEBUG, TAG, "床墊 " + info.getDeviceId() + " 目前： " + (isOnline ? "上線" : "離線"));
+            Toast.makeText(jActivity, "床墊 " + info.getDeviceId() + " 目前： " + (isOnline ? "上線" : "離線"), Toast.LENGTH_SHORT).show();
+            statusHashMap.put(info.getDeviceId(), !isOnline ? -1 : WhizPadEvent.Status.BED_EMPTY.ordinal());
+            if (!list.get(selectedPos).getDeviceId().equals(info.getDeviceId()))
+                return;
+            iv_pad.setImageResource(isOnline ? PAD_STATUS_PHOTO_ID[WhizPadEvent.Status.BED_EMPTY.ordinal()] : R.mipmap.ic_pad_girl_offline);
         }
     }
 
@@ -137,9 +127,12 @@ public class MultiplePadActivity extends JActivity {
         @Override
         public void onClick(View v) {
             selectedPos = pos;
-            WhizPadEvent.Status status = statusHashMap.get(list.get(pos).getDeviceId());
+            Integer status = statusHashMap.get(list.get(pos).getDeviceId());
             if (status != null)
-                iv_pad.setImageResource(PAD_STATUS_PHOTO_ID[status.ordinal()]);
+                if (status == -1)
+                    iv_pad.setImageResource(R.mipmap.ic_pad_girl_offline);
+                else
+                    iv_pad.setImageResource(PAD_STATUS_PHOTO_ID[status]);
             else
                 iv_pad.setImageResource(PAD_STATUS_PHOTO_ID[0]);
             for (int i = 0; i < list.size(); i++) {

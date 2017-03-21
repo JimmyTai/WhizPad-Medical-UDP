@@ -28,7 +28,7 @@ import com.jimmytai.whizpad_medical_zenbo.demo.utils.WifiUtils;
  */
 public class UnpairDialog extends JDialogFragment {
 
-    private static final String TAG = "UnpairDialog";
+    private static final String TAG = UnpairDialog.class.getSimpleName();
     private static final boolean DEBUG = true;
     public static boolean isShow = false;
 
@@ -91,7 +91,6 @@ public class UnpairDialog extends JDialogFragment {
         super.onDismiss(dialog);
         isShow = false;
         JLog.d(DEBUG, TAG, "dismiss UnpairDialog");
-        activity.client.startListenEvent(activity.info, activity.myPadEventCallback);
     }
 
     /* --- Listener --- */

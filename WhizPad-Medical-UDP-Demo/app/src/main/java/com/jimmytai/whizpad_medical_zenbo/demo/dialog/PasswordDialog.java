@@ -27,7 +27,7 @@ import com.jimmytai.whizpad_medical_zenbo.demo.utils.WifiUtils;
  */
 public class PasswordDialog extends JDialogFragment {
 
-    private static final String TAG = "PasswordDialog";
+    private static final String TAG = PasswordDialog.class.getSimpleName();
     private static final boolean DEBUG = true;
     public static boolean isShow = false;
 
@@ -133,7 +133,7 @@ public class PasswordDialog extends JDialogFragment {
                             setPage(Page.SET_PASSWORD);
                         } else if (page == Page.SET_PASSWORD) {
                             String password = et_password.getText().toString();
-                            activity.loadingDialog.show(activity.getFragmentManager(), "LoadingDialog");
+                            activity.loadingDialog.show(activity.getFragmentManager(), LoadingDialog.class.getSimpleName());
                             tv_confirm.setEnabled(false);
                             tv_cancel.setEnabled(false);
                             et_password.setEnabled(false);
