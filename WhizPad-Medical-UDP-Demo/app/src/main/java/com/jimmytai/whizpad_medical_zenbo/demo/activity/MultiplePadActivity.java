@@ -74,6 +74,8 @@ public class MultiplePadActivity extends JActivity {
         findViews();
         setFooterViews();
         client = WhizPadClient.getInstance();
+        /* timeout millis can not less than 15000ms */
+        client.setHeartBeatTimeout(15 * 1000);
     }
 
     @Override

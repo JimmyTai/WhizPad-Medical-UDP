@@ -67,6 +67,7 @@ public class PadStatusActivity extends JActivity {
         findViews();
         createDialog();
         client = WhizPadClient.getInstance();
+        client.setHeartBeatTimeout(20 * 1000);
     }
 
     @Override
